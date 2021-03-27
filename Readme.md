@@ -16,11 +16,11 @@ the secret config file is `env_secret.rb`, copy the default one and fill in your
 
 ```rb
 {
-  side: "buy",      # or "sell" - default: "buy"
-  price:  "0.0001", # maximum price you want to match orders at
-  amount: "50",     # amount to buy (per hour) in cheapETHs
-  every:  "60",     # trigger an order every x minutes if the market is at that price level
-  coin: "eth",      # or others listed # default: "eth"
+  side: "buy",    # or "sell" - default: "buy"
+  price: 0.0001,  # maximum price you want to match orders at
+  amount: 50,     # amount to buy (per hour) in cheapETHs
+  every:  60,     # trigger an order every x minutes if the market is at that price level
+  coin: "cth",    # or others listed # default: "eth"
 }
 ```
 

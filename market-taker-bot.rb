@@ -8,17 +8,13 @@ class MarketTakerBot
 
   Sms = SMS.new
 
-  def check_for_new_orders
-    amount  = 1
-    price   = "0.000044"
-    coin    = CONF.fetch :coin
-    last_order = Order.new(
-      side:   :sell,
-      amount: amount,
-      price:  price,
-      coin:   coin,
-    )
-    last_order
+  def last_offer_get
+    symbol = CONF.fetch :coin
+    last_offer = Centex.offers(symbol: symbol).last
+    price, _ = last_offer
+    {
+      price: price
+    }
   end
 
   def send_sms_alert(order:)
@@ -37,21 +33,31 @@ class MarketTakerBot
     Centex.place_order order: order
   end
 
-  def create_matching_order(last_order:)
-    side = last_order.side == :sell ? "buy" : "sell"
+  def create_matching_order(last_offer_price:)
+    side    = CONF.fetch :side
+    amount  = CONF.fetch :amount
+    coin    = CONF.fetch :coin
     Order.new(
-      side:   side,
-      amount: CONF.fetch(:amount),
-      price:  last_order.price,
-      coin:   CONF.fetch(:coin),
+      side:   side.to_s,
+      amount: amount,
+      price:  last_offer_price,
+      coin:   coin,
     )
   end
 
   def main_tick
-    last_order = check_for_new_orders
-    order = create_matching_order last_order: last_order
-    # send_sms_alert order: order
-    place_order order: order
+    last_offer = last_offer_get
+    max_buy_price = CONF.fetch :price
+    last_offer_price = last_offer.fetch :price
+    last_offer_price = last_offer_price.to_f
+    if last_offer_price <= max_buy_price
+      order = create_matching_order last_offer_price: last_offer_price
+      # send_sms_alert order: order
+      place_order order: order
+      puts
+    else
+      print "." # print a dot when skipping
+    end
   end
 
   def main_loop

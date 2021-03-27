@@ -44,7 +44,7 @@ class Centex
 
   API_HOST = "https://api.centex.io"
   TICKERS_URL = "#{API_HOST}/v1/public/tickers"
-  ORDERBOOK_URL = "#{API_HOST}/v1/public/orderbook?symbol=%s"
+  ORDERBOOK_URL = "#{API_HOST}/v1/public/orderbook?ticker_id=%s&depth=2"
   PLACE_ORDER_URL_PATH = "/v1/trading/order"
   PLACE_ORDER_URL = "#{API_HOST}#{PLACE_ORDER_URL_PATH}"
   # BALANCE_URL_PATH = "/v1/account/balance?symbol=%s"
@@ -73,19 +73,68 @@ class Centex
   end
 
   def orderbook_get(symbol:, depth: 1)
-    url = ORDERBOOK_URL % symbol
+    ticker_id = ALT_PAIRS.fetch symbol
+    url = ORDERBOOK_URL % ticker_id
     resp = Excon.get url
     body = resp.body
     JSON.parse body
   end
 
   def orderbook(symbol:)
-    orderbook = orderbook_get
+    orderbook = orderbook_get symbol: symbol
     orderbook.transform_keys &:to_sym
   end
 
-  def bids
-    orderbook.fetch :bids
+  def offers(symbol:)
+    orderbook(symbol: symbol).fetch :asks
+  end
+
+  def place_order
+    resp = order_place_post order: order
+    puts "resp: #{resp.inspect}"
+    resp
+  end
+
+  def self.place_order(order:)
+    new(order: order).place_order
+  end
+
+  def ticker(symbol:)
+    tickers = tickers_get
+    tickers = JSON.parse tickers
+    pair = ALT_PAIRS.fetch symbol
+    ticker = tickers.find &FindTicker.(pair)
+    {
+      bid: ticker.fetch("bid"),
+      ask: ticker.fetch("ask"),
+      mid: mid_price(ticker),
+    }
+  end
+
+  def self.ticker(symbol:)
+    new.ticker symbol: symbol
+  end
+
+  def self.offers(symbol:)
+    new(order: nil).offers symbol: symbol
+  end
+
+  private
+
+  def write_nonce(nonce: "0")
+    File.open(NONCE_FILE_PATH, "w"){ |f| f.write nonce }
+  end
+
+  FindTicker = -> (pair) {
+    -> (tick) {
+      ticker_id = tick.fetch "ticker_id"
+      ticker_id == pair
+    }
+  }
+
+  def tickers_get
+    resp = Excon.get TICKERS_URL
+    resp.body
   end
 
   def order_place_post(order:)
@@ -113,16 +162,6 @@ class Centex
     JSON.parse body
   end
 
-  def place_order
-    resp = order_place_post order: order
-    puts "resp: #{resp.inspect}"
-    resp
-  end
-
-  def self.place_order(order:)
-    new(order: order).place_order
-  end
-
   def nonce_next
     if File.exists? NONCE_FILE_PATH
       nonce = File.read NONCE_FILE_PATH
@@ -133,40 +172,6 @@ class Centex
       write_nonce
       0
     end
-  end
-
-  private
-
-  def write_nonce(nonce: "0")
-    File.open(NONCE_FILE_PATH, "w"){ |f| f.write nonce }
-  end
-
-  FindTicker = -> (pair) {
-    -> (tick) {
-      ticker_id = tick.fetch "ticker_id"
-      ticker_id == pair
-    }
-  }
-
-  def ticker(symbol:)
-    tickers = tickers_get
-    tickers = JSON.parse tickers
-    pair = ALT_PAIRS.fetch symbol
-    ticker = tickers.find &FindTicker.(pair)
-    {
-      bid: ticker.fetch("bid"),
-      ask: ticker.fetch("ask"),
-      mid: mid_price(ticker),
-    }
-  end
-
-  def self.ticker(symbol:)
-    new.ticker symbol: symbol
-  end
-
-  def tickers_get
-    resp = Excon.get TICKERS_URL
-    resp.body
   end
 
 end
@@ -183,6 +188,7 @@ if __FILE__ == $0
     coin:   :CTH,
   )
   c = Centex.new order: order
+  p c.orderbook symbol: :CTH
   price = c.send :ticker, symbol: :CTH
   puts "price - bid: #{"%.6f" % price[:bid]}, ask: #{"%.6f" % price[:ask]}, mid: #{"%.6f" % price[:mid]} (ETH)"
   c.place_order
