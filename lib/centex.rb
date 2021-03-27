@@ -177,6 +177,7 @@ class Centex
 end
 
 if __FILE__ == $0
+  # sample test for the Centex class main public methods
   require 'bundler'
   Bundler.require :default
   require_relative '../env_secret'

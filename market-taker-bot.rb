@@ -6,7 +6,7 @@ class MarketTakerBot
 
   ONE_MINUTE = 60 # seconds
 
-  Sms = SMS.new
+  Sms = SMS.new # NOTE: still in WIP
 
   def last_offer_get
     symbol = CONF.fetch :coin
@@ -67,16 +67,13 @@ class MarketTakerBot
     end
   end
 
-  def auto_stop
-    Thread.new do
-      sleep
-      exit
-    end
-  end
-
-  def strategy
-    buy if price < set_price
-  end
+  # TODO: implement
+  # def auto_stop
+  #   Thread.new do
+  #     sleep
+  #     exit
+  #   end
+  # end
 
   def self.main_loop
     new.main_loop
