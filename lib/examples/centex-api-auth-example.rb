@@ -64,7 +64,8 @@ class Centex
     headers = centex_headers hmac_sig: hmac_sig, nonce: nonce
     url = ACCOUNT_BALANCE_URL % symbol
     resp = Excon.get url, headers: headers
-    resp.body
+    body = resp.body
+    JSON.parse body
   end
 
   def self.balance(symbol:)
