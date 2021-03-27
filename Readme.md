@@ -1,6 +1,6 @@
 # centex-market-taker-bot
 
-Simple market taker bot for cente - this bot can place buy orders that take (match) active market offers (sell orders)
+Simple market taker bot for the Centex crypto exchange - this bot can place buy orders that take (match) active market offers (sell orders)
 
 #### Exchange:
 
