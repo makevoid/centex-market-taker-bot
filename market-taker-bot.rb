@@ -4,7 +4,7 @@ class MarketTakerBot
 
   Order = Struct.new :side, :amount, :price, :coin, keyword_init: true
 
-  FIVE_MINUTES = 60 * 5 # seconds
+  ONE_MINUTE = 60 # seconds
 
   Sms = SMS.new
 
@@ -63,7 +63,7 @@ class MarketTakerBot
   def main_loop
     loop do
       main_tick
-      sleep FIVE_MINUTES
+      sleep CONF.fetch(:every) * ONE_MINUTE
     end
   end
 
