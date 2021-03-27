@@ -1,6 +1,6 @@
-# centex-market-taking-bot
+# centex-market-taker-bot
 
-Simple market TAKING bot for centex (default behaviour: market "taker", the market-making feature is in WIP) - this bot can place buy orders that take (match) market offer active orders
+Simple market taker bot for cente - this bot can place buy orders that take (match) active market offers (sell orders)
 
 #### Exchange:
 

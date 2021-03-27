@@ -1,29 +1,22 @@
 require_relative 'env'
 
-class MarketMakingBot
+class MarketTakerBot
 
   Order = Struct.new :side, :amount, :price, :coin, keyword_init: true
-
-  CONF = {
-    side:   :buy,
-    price:  "0.000035",   # cheap cheapETHs :D (price treshold, take only at this price)
-    amount: "50",         # amount to buy (per hour) in cheapETHs
-    every:  "60",         # trigger an order every x minutes if the market is at that price level
-    auto_stop_after: "3", # automatically shut off after x days
-    coin:   :CTH          # CTH/ETH pair
-  }
-
 
   FIVE_MINUTES = 60 * 5 # seconds
 
   Sms = SMS.new
 
   def check_for_new_orders
-    amount = 0
-    price = 0
+    amount  = 1
+    price   = "0.000044"
+    coin    = CONF.fetch :coin
     last_order = Order.new(
+      side:   :sell,
       amount: amount,
       price:  price,
+      coin:   coin,
     )
     last_order
   end
@@ -40,25 +33,25 @@ class MarketMakingBot
   #   order_match: order to match
   #
   def place_order(order:)
+    puts "placing order: #{order.side} #{order.amount} @ #{order.price} (#{Time.now.strftime "%H:%M"})"
     Centex.place_order order: order
   end
 
   def create_matching_order(last_order:)
-    side_match = order_match.fetch :side
-    side = side_match == :sell ? :buy : :sell
+    side = last_order.side == :sell ? "buy" : "sell"
     Order.new(
-      side:   CONF.fetch(:side),
+      side:   side,
       amount: CONF.fetch(:amount),
-      price:  CONF.fetch(:price),
+      price:  last_order.price,
       coin:   CONF.fetch(:coin),
     )
   end
 
   def main_tick
     last_order = check_for_new_orders
-    order = create_order last_order: last_order
-    send_sms_alert order: order
-    place_order order: last_order
+    order = create_matching_order last_order: last_order
+    # send_sms_alert order: order
+    place_order order: order
   end
 
   def main_loop
@@ -86,6 +79,6 @@ class MarketMakingBot
 end
 
 if $0 == __FILE__
-  bot = MarketMakingBot.new
+  bot = MarketTakerBot.new
   bot.main_loop
 end
