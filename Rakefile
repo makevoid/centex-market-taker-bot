@@ -1,6 +1,6 @@
 desc "Run the bot"
 task :run do
-  sh "bundle exec ruby market-making-bot.rb"
+  sh "bundle exec ruby market-taker-bot.rb"
 end
 
 desc "Run the tests (specs)"
